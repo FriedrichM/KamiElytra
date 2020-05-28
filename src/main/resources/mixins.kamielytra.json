@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_8",
+  "package": "net.kamielytra.mixin.client",
+  "refmap": "mixins.kamielytra.refmap.json",
+  "client": [
+    "MixinNetworkManager"
+  ]
+}
