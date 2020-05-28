@@ -26,8 +26,9 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.*;
 /*
- i went full static  here i dont know why but its easier at some points and im to lazy to chaneg it.
- I doesnt matter tho as we never have more than one instance
+ I went full static here i dont know why but its easier at some points and im to lazy to change it.
+ It doesnt matter tho as we never have more than one instance
+ Atm i have locked the view as moving the yaw and pitch had effect on the fly movement i dont know why
  */
 @EventBusSubscriber
 public class Astarpathfinder {
@@ -110,12 +111,7 @@ public class Astarpathfinder {
                 rubberbandcounter = 0;
                 laspacketz = -1;
                 laspacketx = -1;
-                roof = 0;
-                if (mc.player.dimension == -1) {
-                    roof = 121;
-                } else {
-                    roof = 255;
-                }
+                roof = mc.player.dimension == -1?121:255;
             } else {
 
             }
@@ -147,9 +143,7 @@ public class Astarpathfinder {
         CPacketPlayer packet = (CPacketPlayer) event.getPacket();
 
         if (hoverState) {
-//                packet.pitch=0;
             packet.pitch = (float) -PitchOffset;
-            //mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "pitch"+packet.pitch));
         } else {
             packet.pitch = 0;
         }
@@ -209,6 +203,8 @@ public class Astarpathfinder {
     private static void landSave() {
         switch (landstate) {
             case FLY_TO_OBSTACLE:
+
+                //TODO: make this smarter
                 if (!flytowardsstarted) {
                     flytowardsstarted = true;
                     flytowardsstarttime = System.currentTimeMillis();
@@ -232,6 +228,9 @@ public class Astarpathfinder {
                         buildstate = TrackState.GOTO_BUILD;
                         state = State.GOTO_TRACK;
                     }
+                }else{
+                    //TODO  find save landing spot and fly there
+
                 }
                 break;
 
@@ -346,9 +345,11 @@ public class Astarpathfinder {
             for (int i = 0; i <= closest; i++) {
                 path.remove(0);
             }
-        } else if (new Vec3d(path.get(closest).pos).add(.5, 0, .5)
-                .distanceTo(mc.player.getPositionVector().add(new Vec3d(mc.player.motionX, 0, mc.player.motionZ))) > dist) {
         }
+//        else if (new Vec3d(path.get(closest).pos.getX()+0.5,0,path.get(closest).pos.getZ())
+//                .distanceTo( new Vec3d(mc.player.posX+mc.player.motionX,0,mc.player.posZ+mc.player.motionZ)) > dist) {
+//            //TODO maby remove to
+//        }
 
     }
 

@@ -6,6 +6,10 @@ import net.minecraft.util.math.Vec3i;
 import java.util.*;
 
 public class MyAstarAlg {
+
+    /*
+    https://en.wikipedia.org/wiki/A*_search_algorithm
+     */
     private static PriorityQueue<MyAstarNode> openlist;
     private static HashMap<BlockPos,MyAstarNode> closedlist;
     private static Vec3i targetVec;
@@ -74,10 +78,7 @@ public class MyAstarAlg {
 
     private static void expandNode(MyAstarNode currentnode) {
         MyAstarNode successor=null;
-        boolean xblocked;
-        boolean mxblocked;
-        boolean yblocked;
-        boolean myblocked;
+
         for(int i=0;i<8;i++){
             switch (i){
                 case 0:
