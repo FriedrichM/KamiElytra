@@ -3,7 +3,6 @@ package net.kamielytra.astarpathfind;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.init.Blocks;
-import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashSet;
@@ -74,8 +73,6 @@ public class MyAstarNode {
 
     }
 
-    public PathPoint getPathPiont() {
-        return new PathPoint(pos.getX(),pos.getY(),pos.getZ());
-    }
+
 
 }

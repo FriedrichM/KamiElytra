@@ -2,7 +2,6 @@ package net.kamielytra.astarpathfind;
 
 import baritone.api.BaritoneAPI;
 import baritone.api.pathing.goals.GoalBlock;
-import net.kamielytra.KamiElytra;
 import net.kamielytra.mixin.PacketEvent;
 import net.kamielytra.util.KeyReflectionHelper;
 import net.minecraft.block.Block;
@@ -14,7 +13,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
-import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -27,7 +25,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 
 import java.util.*;
-
+/*
+ i went full static  here i dont know why but its easier at some points and im to lazy to chaneg it.
+ I doesnt matter tho as we never have more than one instance
+ */
 @EventBusSubscriber
 public class Astarpathfinder {
 
@@ -63,7 +64,7 @@ public class Astarpathfinder {
     private static int roof;
     public static float PitchOffset = 50;
     private static double distancetofirst;
-    public static double flyspeed= 1.8;
+    public static double flyspeed = 1.8;
 
     enum State {
         START_FLYING,
@@ -87,9 +88,9 @@ public class Astarpathfinder {
 
     public static void init() {
 
-        if (KamiElytra.mc.player != null) {
+        if (mc.player != null) {
 
-            KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Astar Pathfinding enabled"));
+            mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Astar Pathfinding enabled"));
             if (mc.player != null) {
                 currentplayerpos = new Vec3d(Math.floor(mc.player.posX) + 0.5, mc.player.posY, Math.floor(mc.player.posZ) + 0.5);
                 startplayerpos = new Vec3d(currentplayerpos.x, currentplayerpos.y, currentplayerpos.z);
@@ -123,7 +124,7 @@ public class Astarpathfinder {
 
     public static void turnOff() {
 
-        if (KamiElytra.mc.player != null) {
+        if (mc.player != null) {
             mc.timer.tickLength = 50;
             if (mc.player != null) {
                 mc.player.motionZ = 0;
@@ -134,7 +135,7 @@ public class Astarpathfinder {
                 mc.player.capabilities.allowFlying = false;
             }
             setkeystate(mc.gameSettings.keyBindJump, false);
-            KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Astar Pathfinding disabled"));
+            mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Astar Pathfinding disabled"));
         }
         BaritoneAPI.getProvider().getPrimaryBaritone().getPathingBehavior().cancelEverything();
         path = null;
@@ -148,7 +149,7 @@ public class Astarpathfinder {
         if (hoverState) {
 //                packet.pitch=0;
             packet.pitch = (float) -PitchOffset;
-            //KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "pitch"+packet.pitch));
+            //mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "pitch"+packet.pitch));
         } else {
             packet.pitch = 0;
         }
@@ -250,26 +251,18 @@ public class Astarpathfinder {
             lastStuckCheckPos = new Vec3d(0, 0, 0);
             currentStuckCheckPos = new Vec3d(0, 0, 0);
             System.out.println("BLOCKED");
-            state = State.LAND_SAVE;//TODO: Flying since
+            state = State.LAND_SAVE;
             nopathfound = 0;
         }
         float yawDeg = 0;
 
-        if (path != null && path.size() > 2) {
+        if (path != null && path.size() > 1) {
             distancetofirst = Math.sqrt(Math.pow(path.get(0).pos.getX() - mc.player.posX, 2) + Math.pow(path.get(0).pos.getZ() - mc.player.posZ, 2));
-            if (direction == -1) {
-                yawDeg = (float) calculateLookAt(path.get(Math.min(path.size() - 1, 2)).pos.getX() + 0.5, mc.player.posY, path.get(Math.min(path.size() - 1, 2)).pos.getZ() + 0.5, mc.player)[0];
-            } else {
-                yawDeg = (float) calculateLookAt(path.get(Math.min(path.size() - 1, 2)).pos.getX() + 0.5, mc.player.posY, path.get(Math.min(path.size() - 1, 2)).pos.getZ() + 0.5, mc.player)[0];
-            }
-
-
+            yawDeg = (float) calculateLookAt(path.get(Math.min(path.size() - 1, 1)).pos.getX() + 0.5, mc.player.posY, path.get(Math.min(path.size() - 1, 1)).pos.getZ() + 0.5, mc.player)[0];
         }
         packetYaw = yawDeg;
         mc.player.rotationPitch = 0;
         flyTowards(yawDeg);
-
-
     }
 
     private static void flyTowards(float yawDeg) {
@@ -304,16 +297,16 @@ public class Astarpathfinder {
             lastStuckCheckPos = currentStuckCheckPos;
             currentStuckCheckPos = mc.player.getPositionVector();
             if (lastStuckCheckPos.distanceTo(currentStuckCheckPos) < 1.3) {
-                KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "moved too little"));
+                mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "moved too little"));
                 return true;
             }
         }
         if (nopathfound > 10) {
-            KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "no path found"));
+            mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "no path found"));
             return true;
         }
         if (path != null && !path.isEmpty() && calcPathLength() / Math.sqrt(Math.pow(mc.player.posX - path.get(path.size() - 1).pos.getX(), 2) + Math.pow(mc.player.posZ - path.get(path.size() - 1).pos.getZ(), 2)) > 2) {
-            KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "long path ratio"));
+            mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "long path ratio"));
             return true;
         }
         if (rubberbandcounter > 3)
@@ -343,13 +336,13 @@ public class Astarpathfinder {
         int closest = 0;
         double tempdist;
         for (int i = 0; i < path.size(); i++) {
-            if ((tempdist = Math.sqrt(Math.pow(path.get(i).pos.getX() + 0.5 - mc.player.posX, 2) + Math.pow(path.get(i).pos.getZ() + 0.5 - mc.player.posZ, 2))) < dist) {//TODO Bug
+            if ((tempdist = Math.sqrt(Math.pow(path.get(i).pos.getX() + 0.5 - mc.player.posX, 2) + Math.pow(path.get(i).pos.getZ() + 0.5 - mc.player.posZ, 2))) < dist) {
                 dist = tempdist;
                 closest = i;
             }
         }
 
-        if (dist < 0.4) {
+        if (dist < 0.5) {
             for (int i = 0; i <= closest; i++) {
                 path.remove(0);
             }
@@ -361,57 +354,60 @@ public class Astarpathfinder {
 
     private static void calcPath(boolean forcenew) {
 
-        //if (calcPathLength() >20) return;
+        //if (calcPathLength() >20) return;// dont calculate a new one itf the old onei s still long enough.
         List<MyAstarNode> newpath = new ArrayList<>();
-        boolean continuePath = false;
+        //atm a new path gets forced every tick. one would think that is too much for one tick but it actually isnt that bad.
+        //should change this in the future tho.
+        boolean continuePath = (!forcenew && path != null && !path.isEmpty());
+        BlockPos startpath = continuePath ? path.get(path.size() - 1).pos : currentplayerBlockpos;
         int addlayer = 0;
         switch (direction) {
             case 0:
                 //+z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(startplayerpos.x, currentplayerBlockpos.getY(), currentplayerBlockpos.getZ() + 40),
                         addlayer);
                 break;
             case 1:
                 //-x+z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos.add(0, 0, -1)),
+                newpath = MyAstarAlg.findPath(startpath.add(0, 0, -1),//+- / -+ diagonals are strange this somehow fixes it
                         new BlockPos(currentplayerBlockpos.getX() - 40, currentplayerBlockpos.getY(), startplayerpos.z + Math.abs(startplayerpos.x - (currentplayerBlockpos.getX() - 40))),
                         addlayer);
                 break;
             case 2:
                 //-x
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(currentplayerBlockpos.getX() - 40, currentplayerBlockpos.getY(), startplayerpos.z),
                         addlayer);
 
                 break;
             case 3:
                 //-x-z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(currentplayerBlockpos.getX() - 40, currentplayerBlockpos.getY(), startplayerpos.z - Math.abs(startplayerpos.x - (currentplayerBlockpos.getX() - 40))),
                         addlayer);
                 break;
             case 4:
                 //-z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(startplayerpos.x, currentplayerBlockpos.getY(), currentplayerBlockpos.getZ() - 40),
                         addlayer);
                 break;
             case 5:
                 //+x-z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos.add(-1, 0, 0)),
+                newpath = MyAstarAlg.findPath(startpath.add(-1, 0, 0),//+- / -+ diagonals are strange this somehow fixes it
                         new BlockPos(currentplayerBlockpos.getX() + 40, currentplayerBlockpos.getY(), startplayerpos.z - Math.abs(startplayerpos.x - (currentplayerBlockpos.getX() + 40))),
                         addlayer);
                 break;
             case 6:
                 //+x
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(currentplayerBlockpos.getX() + 40, currentplayerBlockpos.getY(), startplayerpos.z),
                         addlayer);
                 break;
             case 7:
                 //+x+z
-                newpath = MyAstarAlg.findPath(((continuePath = (!forcenew && path != null && !path.isEmpty())) ? path.get(path.size() - 1).pos : currentplayerBlockpos),
+                newpath = MyAstarAlg.findPath(startpath,
                         new BlockPos(currentplayerBlockpos.getX() + 40, currentplayerBlockpos.getY(), startplayerpos.z + Math.abs(startplayerpos.x - (currentplayerBlockpos.getX() + 40))),
                         addlayer);
                 break;
@@ -505,10 +501,10 @@ public class Astarpathfinder {
         GL11.glColor3f(1, 1, 0);
         GlStateManager.disableDepth();
         GL11.glBegin(GL11.GL_LINES);
-        PathPoint first = new PathPoint(mc.player.getPosition().x, mc.player.getPosition().y, mc.player.getPosition().z);
+        Vec3d first = new Vec3d(mc.player.getPosition().x, mc.player.getPosition().y, mc.player.getPosition().z);
         GL11.glVertex3d(first.x - mc.getRenderManager().renderPosX + .5, mc.player.posY - 0.5 - mc.getRenderManager().renderPosY, first.z - mc.getRenderManager().renderPosZ + .5);
         for (int i = 0; i < path.size() - 1; i++) {
-            PathPoint pathPoint = path.get(i).getPathPiont();
+            BlockPos pathPoint = path.get(i).pos;
             GL11.glVertex3d(pathPoint.x - mc.getRenderManager().renderPosX + .5, mc.player.posY - 0.5 - mc.getRenderManager().renderPosY, pathPoint.z - mc.getRenderManager().renderPosZ + .5);
             if (i != path.size() - 1) {
                 GL11.glVertex3d(pathPoint.x - mc.getRenderManager().renderPosX + .5, mc.player.posY - 0.5 - mc.getRenderManager().renderPosY, pathPoint.z - mc.getRenderManager().renderPosZ + .5);
@@ -590,8 +586,7 @@ public class Astarpathfinder {
                         BaritoneAPI.getProvider().getPrimaryBaritone().getCustomGoalProcess().setGoalAndPath(new GoalBlock(takeoffPos));
                         baritonePathStarted = true;
                     } else {
-                        mc.player.posX = takeoffPos.x + 0.5;
-                        mc.player.posZ = takeoffPos.z + 0.5;
+                        //TODO Center in block
                         mc.player.rotationPitch = 0;
                         mc.player.rotationYaw = direction <= 4 ? direction * 45 : -180 + direction % 4 * 45;
                         baritonePathStarted = false;
@@ -699,6 +694,7 @@ public class Astarpathfinder {
         Collections.sort(blocklist, new Comparator<BlockPos>() {
             @Override
             public int compare(BlockPos o1, BlockPos o2) {
+                //  we dont want to change hight if not needed.
                 double dist1 = Math.pow(target.x - o1.x, 2) + Math.pow((target.y - o1.y) * 3, 2) + Math.pow(target.z - o1.z, 2);
                 double dist2 = Math.pow(target.x - o2.x, 2) + Math.pow((target.y - o2.y) * 3, 2) + Math.pow(target.z - o2.z, 2);
                 return Double.compare(dist1, dist2);
@@ -706,7 +702,7 @@ public class Astarpathfinder {
         });
         for (BlockPos b : blocklist) {
             if (checkTunnelAt(b, tunnel)) {
-                KamiElytra.mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Tunnel Found"));
+                mc.player.sendMessage(new TextComponentString(TextFormatting.DARK_RED + "Tunnel Found"));
                 return b;
             }
 
